@@ -1,101 +1,82 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 100%;
-        }
-        h1 {
-            margin: 0 0 20px;
-            font-size: 24px;
-            text-align: center;
-            color: #333;
-        }
-        input {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .links {
-            margin-top: 15px;
-            text-align: center;
-        }
-        .links a {
-            color: #007bff;
-            text-decoration: none;
-        }
-        .links a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Inicio de Sesión</h1>
-        <form id="login-form">
-            <input type="text" id="username" placeholder="Usuario" required>
-            <input type="password" id="password" placeholder="Clave" required>
-            <button type="submit">Ingresar</button>
-        </form>
-        <div class="links">
-            <a href="#" id="register-link">Registrarse</a>
-        </div>
-    </div>
+<script>
+    const backendUrl = https://nf-backend.onrender.com; // Cambia esta URL si alojas el backend en otro servicio
 
-    <script>
-        document.getElementById('login-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
+    // Login
+    loginForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
 
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
-            const response = await fetch('http://localhost:3000/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+        try {
+            const response = await fetch(`${backendUrl}/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password }),
             });
 
-            const result = await response.json();
-            if (result.success) {
-                alert('Inicio de sesión exitoso');
+            if (response.ok) {
+                const data = await response.json();
+                userNameSpan.textContent = data.username;
+                loginContainer.style.display = "none";
+                homeContainer.style.display = "block";
+
+                // Mostrar botón admin si es admin
+                if (data.role === "admin") {
+                    adminUsersButton.style.display = "block";
+                } else {
+                    adminUsersButton.style.display = "none";
+                }
             } else {
-                alert('Credenciales incorrectas');
+                errorMessage.style.display = "block";
             }
-        });
-    </script>
-</body>
-</html>
+        } catch (error) {
+            console.error("Error al iniciar sesión:", error);
+        }
+    });
+
+    // Obtener y mostrar usuarios
+    async function populateUsersTable() {
+        try {
+            const response = await fetch(`${backendUrl}/users`);
+            const users = await response.json();
+
+            usersTableBody.innerHTML = "";
+            users.forEach(({ username, role }) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `<td>${username}</td><td>${role}</td>`;
+                usersTableBody.appendChild(row);
+            });
+        } catch (error) {
+            console.error("Error al cargar usuarios:", error);
+        }
+    }
+
+    // Agregar usuario
+    addUserForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const newUsername = document.getElementById("new-username").value;
+        const newPassword = document.getElementById("new-password").value;
+
+        try {
+            const response = await fetch(`${backendUrl}/users`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: newUsername, password: newPassword }),
+            });
+
+            if (response.ok) {
+                successMessage.style.display = "block";
+                setTimeout(() => {
+                    successMessage.style.display = "none";
+                }, 2000);
+                addUserForm.reset();
+                populateUsersTable();
+            } else {
+                alert("Error al agregar usuario.");
+            }
+        } catch (error) {
+            console.error("Error al agregar usuario:", error);
+        }
+    });
+</script>
